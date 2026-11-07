@@ -1,0 +1,25 @@
+sources:
+  - name: The Hindu
+    rss: https://www.thehindu.com/feeder/default.rss
+    category: national
+    enabled: true
+  - name: NDTV
+    rss: https://feeds.feedburner.com/ndtvnews-top-stories
+    category: national
+    enabled: true
+  - name: Times of India
+    rss: https://timesofindia.indiatimes.com/rssfeedstopstories.cms
+    category: national
+    enabled: true
+  - name: PIB
+    rss: https://pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3
+    category: national
+    enabled: true
+  - name: BBC
+    rss: https://feeds.bbci.co.uk/news/rss.xml
+    category: world
+    enabled: true
+  - name: Al Jazeera
+    rss: https://www.aljazeera.com/xml/rss/all.xml
+    category: world
+    enabled: true

@@ -1,0 +1,1 @@
+"""Elliot backend application package."""

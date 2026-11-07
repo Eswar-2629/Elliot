@@ -1,0 +1,22 @@
+# Environment
+.env
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+
+# SQLite runtime data
+*.db
+*.sqlite
+*.sqlite3
+
+# Editors and logs
+.vscode/
+*.log

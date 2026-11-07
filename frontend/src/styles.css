@@ -1,0 +1,104 @@
+:root {
+  font-family: "Segoe UI", sans-serif;
+  color: #d8f7ff;
+  background: #071018;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+
+button, input { font: inherit; }
+
+.shell {
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 18px;
+}
+
+.topbar {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(82, 218, 255, 0.25);
+}
+
+.eyebrow { margin: 0 0 2px; color: #78b7c7; font-size: 11px; letter-spacing: 3px; }
+h1 { margin: 0; font-size: 30px; letter-spacing: 8px; }
+
+.system-status { display: flex; align-items: center; gap: 9px; max-width: 55%; font-size: 12px; text-transform: uppercase; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff8c69; }
+.online .status-dot { background: #54e7b0; box-shadow: 0 0 12px #54e7b0; }
+.offline { color: #ffb09a; }
+
+.chat-panel {
+  height: calc(100vh - 144px);
+  min-height: 420px;
+  border: 1px solid rgba(82, 218, 255, 0.18);
+  background: rgba(8, 24, 35, 0.72);
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.messages { overflow-y: auto; padding: 28px; }
+.welcome { height: 100%; display: grid; place-content: center; justify-items: center; color: #8dc7d5; }
+.signal { width: 74px; height: 74px; border: 1px solid #52daff; border-radius: 50%; display: grid; place-items: center; font-size: 28px; box-shadow: inset 0 0 22px rgba(82, 218, 255, 0.16), 0 0 20px rgba(82, 218, 255, 0.09); }
+
+.message { max-width: 78%; margin-bottom: 18px; border-left: 2px solid rgba(82, 218, 255, 0.55); padding: 3px 14px; }
+.message.user { margin-left: auto; border-left: 0; border-right: 2px solid rgba(84, 231, 176, 0.55); text-align: right; }
+.message-label { color: #71b2c1; font-size: 10px; letter-spacing: 2px; }
+.message p { margin: 7px 0 0; line-height: 1.55; white-space: pre-wrap; }
+.loading { color: #86c3d1; font-size: 13px; }
+.loading span { animation: blink 1.2s infinite; }
+.loading span:nth-child(2) { animation-delay: 0.2s; }
+.loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 50% { opacity: 0.15; } }
+
+.command-bar { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 14px; border-top: 1px solid rgba(82, 218, 255, 0.18); background: rgba(3, 13, 20, 0.92); }
+.command-bar input { width: 100%; min-width: 0; border: 1px solid rgba(82, 218, 255, 0.24); border-radius: 4px; outline: none; color: #d8f7ff; background: #091821; padding: 13px 15px; }
+.command-bar input:focus { border-color: #52daff; box-shadow: 0 0 0 2px rgba(82, 218, 255, 0.08); }
+.command-bar button { border: 1px solid #52daff; border-radius: 4px; color: #dffaff; background: rgba(82, 218, 255, 0.1); padding: 0 18px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+.command-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+.news-ticker { height: 36px; border: 1px solid rgba(82, 218, 255, 0.16); border-radius: 4px; display: flex; align-items: center; gap: 28px; overflow-x: auto; white-space: nowrap; padding: 0 12px; color: #a7cbd4; font-size: 12px; }
+.news-ticker a { color: inherit; text-decoration: none; }
+.news-ticker strong { color: #52daff; margin-right: 6px; }
+.stage-layout { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; }
+.stage-layout .chat-panel { height: calc(100vh - 194px); }
+.news-panel { height: calc(100vh - 194px); border: 1px solid rgba(82, 218, 255, 0.18); border-radius: 8px; background: rgba(8, 24, 35, 0.72); overflow: hidden; display: grid; grid-template-rows: 42px minmax(0, 1fr); }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; padding: 0 12px; border-bottom: 1px solid rgba(82, 218, 255, 0.18); font-size: 11px; letter-spacing: 2px; }
+.panel-heading small { color: #7aaabd; }
+.news-list { overflow-y: auto; }
+.news-item { padding: 12px; border-bottom: 1px solid rgba(82, 218, 255, 0.1); }
+.news-item.alerted { border-left: 3px solid #54e7b0; background: rgba(84, 231, 176, 0.04); }
+.news-meta { display: flex; justify-content: space-between; color: #7aaabd; font-size: 10px; margin-bottom: 5px; }
+.news-item a { color: #dffaff; text-decoration: none; line-height: 1.35; }
+.news-item a:hover { color: #52daff; }
+.news-item p { margin: 8px 0 0; color: #9ab9c2; font-size: 12px; line-height: 1.45; }
+.news-empty { color: #7aaabd; padding: 12px; }
+
+@media (max-width: 900px) {
+  .stage-layout { grid-template-columns: 1fr; }
+  .stage-layout .chat-panel { height: calc(100vh - 420px); min-height: 360px; }
+  .news-panel { height: 220px; }
+}
+
+@media (max-width: 640px) {
+  .shell { padding: 14px; gap: 10px; }
+  h1 { font-size: 24px; }
+  .chat-panel { height: calc(100vh - 116px); }
+  .messages { padding: 18px 14px; }
+  .message { max-width: 88%; }
+  .system-status { max-width: 42%; text-align: right; justify-content: flex-end; overflow-wrap: anywhere; }
+  .command-bar { grid-template-columns: minmax(0, 1fr) 64px; }
+  .command-bar button { padding: 0 8px; font-size: 11px; }
+}
