@@ -8,6 +8,13 @@ export default function App() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [articles, setArticles] = useState([]);
+  const [memories, setMemories] = useState([]);
+  const [memoryLearning, setMemoryLearning] = useState(true);
+  const [showMemory, setShowMemory] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [profile, setProfile] = useState(null);
+  const [activeJobPanel, setActiveJobPanel] = useState(null);
   const endRef = useRef(null);
 
   async function loadStatus() {
@@ -32,9 +39,44 @@ export default function App() {
     }
   }
 
+  async function loadMemories() {
+    try {
+      const [memoryResponse, settingResponse] = await Promise.all([
+        fetch(`${API_URL}/memories`),
+        fetch(`${API_URL}/memory-settings`),
+      ]);
+      if (memoryResponse.ok) setMemories((await memoryResponse.json()).memories || []);
+      if (settingResponse.ok) setMemoryLearning((await settingResponse.json()).memory_learning);
+    } catch {
+      // Memory controls remain available when the backend is restarted.
+    }
+  }
+
+  async function loadJobs() {
+    try {
+      const response = await fetch(`${API_URL}/jobs?limit=100`);
+      if (response.ok) setJobs((await response.json()).jobs || []);
+    } catch {}
+  }
+
+  async function loadProfile() {
+    try {
+      const response = await fetch(`${API_URL}/profile`);
+      if (response.ok) setProfile(await response.json());
+    } catch {}
+  }
+
+  async function updateJobStatus(jobId, status) {
+    await fetch(`${API_URL}/jobs/${jobId}/status`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status, note: "" }) });
+    loadJobs();
+  }
+
   useEffect(() => {
     loadStatus();
     loadLatestNews();
+    loadMemories();
+    loadJobs();
+    loadProfile();
 
     const wsUrl = `${API_URL.replace(/^http/, "ws")}/ws/news`;
     const socket = new WebSocket(wsUrl);
@@ -88,11 +130,13 @@ export default function App() {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({ message: content, conversation_id: conversationId }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Request failed");
+      setConversationId(data.conversation_id || conversationId);
       setMessages([...nextMessages, { role: "assistant", content: data.reply }]);
+      loadMemories();
     } catch (error) {
       setMessages([...nextMessages, { role: "assistant", content: `Elliot error: ${error.message}` }]);
     } finally {
@@ -108,9 +152,15 @@ export default function App() {
           <p className="eyebrow">PERSONAL AI SYSTEM</p>
           <h1>Elliot</h1>
         </div>
-        <div className={`system-status ${status?.status === "ok" ? "online" : "offline"}`}>
-          <span className="status-dot" />
-          {status?.status === "ok" ? `${status.provider} / ${status.model}` : "OFFLINE"}
+        <div className="header-actions">
+          <button className="memory-toggle" onClick={() => setActiveJobPanel((current) => current === "jobs" ? null : "jobs")}>Jobs</button>
+          <button className="memory-toggle" onClick={() => setActiveJobPanel((current) => current === "tracker" ? null : "tracker")}>Tracker</button>
+          <button className="memory-toggle" onClick={() => setActiveJobPanel((current) => current === "profile" ? null : "profile")}>Profile</button>
+          <button className="memory-toggle" onClick={() => setShowMemory((visible) => !visible)}>Memory</button>
+          <div className={`system-status ${status?.status === "ok" ? "online" : "offline"}`}>
+            <span className="status-dot" />
+            {status?.status === "ok" ? `${status.provider} / ${status.model}` : "OFFLINE"}
+          </div>
         </div>
       </header>
 
@@ -171,6 +221,82 @@ export default function App() {
         </div>
       </aside>
       </div>
+      {activeJobPanel && (
+        <section className="jobs-panel" aria-label={`${activeJobPanel} panel`}>
+          <div className="memory-heading"><span>{activeJobPanel.toUpperCase()}</span><button className="panel-close" onClick={() => setActiveJobPanel(null)}>Close</button></div>
+          {activeJobPanel === "profile" && profile && (
+            <div className="job-panel-list">
+              <label>Name<input defaultValue={profile.full_name} /></label>
+              <label>Email<input defaultValue={profile.email} /></label>
+              <label>Location<input defaultValue={profile.location} /></label>
+              <label>Target roles<input defaultValue={(profile.target_roles || []).join(", ")} /></label>
+              <label>Skills<input defaultValue={(profile.skills || []).join(", ")} /></label>
+              <button onClick={async (event) => {
+                const fields = event.currentTarget.parentElement.querySelectorAll("input");
+                await fetch(`${API_URL}/profile`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: fields[0].value, email: fields[1].value, location: fields[2].value, target_roles: fields[3].value.split(',').map((value) => value.trim()).filter(Boolean), skills: fields[4].value.split(',').map((value) => value.trim()).filter(Boolean) }) });
+                loadProfile();
+              }}>Save Profile</button>
+              <button onClick={async () => { await fetch(`${API_URL}/jobs/fetch`, { method: "POST" }); loadJobs(); }}>Fetch Jobs Now</button>
+            </div>
+          )}
+          {activeJobPanel !== "profile" && (
+            <div className="job-panel-list">
+              {jobs.filter((job) => activeJobPanel !== "tracker" || !["new", "ignored"].includes(job.status)).map((job) => (
+                <article className={`job-item ${job.scam_risk ? "scam" : ""}`} key={job.id}>
+                  <div className="job-meta"><strong>{job.company}</strong><span>{job.match_score}%</span></div>
+                  <a href={job.url} target="_blank" rel="noreferrer">{job.title}</a>
+                  <p>{job.match_reason || "Not scored yet."}</p>
+                  {!!job.gaps?.length && <small>Gaps: {job.gaps.join(", ")}</small>}
+                  <div className="job-actions">
+                    <button onClick={() => updateJobStatus(job.id, "saved")}>Save</button>
+                    <button onClick={() => updateJobStatus(job.id, "ignored")}>Ignore</button>
+                    <button onClick={async () => { await fetch(`${API_URL}/jobs/${job.id}/tailor-resume`, { method: "POST" }); }}>Tailor Resume</button>
+                    <button onClick={async () => { await fetch(`${API_URL}/jobs/${job.id}/cover-letter?tone=formal`, { method: "POST" }); }}>Cover Letter</button>
+                  </div>
+                  {activeJobPanel === "tracker" && <select value={job.status} onChange={(event) => updateJobStatus(job.id, event.target.value)}>
+                    {["new", "saved", "applied", "interview", "offer", "rejected", "ignored"].map((status) => <option key={status}>{status}</option>)}
+                  </select>}
+                </article>
+              ))}
+              {!jobs.length && <p className="news-empty">No jobs found yet.</p>}
+            </div>
+          )}
+        </section>
+      )}
+      {showMemory && (
+        <section className="memory-panel" aria-label="Memory controls">
+          <div className="memory-heading">
+            <span>MEMORIES</span>
+            <label><input type="checkbox" checked={memoryLearning} onChange={async (event) => {
+              const enabled = event.target.checked;
+              await fetch(`${API_URL}/memory-settings?enabled=${enabled}`, { method: "PATCH" });
+              setMemoryLearning(enabled);
+            }} /> Learning</label>
+          </div>
+          <div className="memory-list">
+            {memories.map((memory) => (
+              <article className="memory-item" key={memory.id}>
+                <select value={memory.category} onChange={async (event) => {
+                  const category = event.target.value;
+                  await fetch(`${API_URL}/memories/${memory.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category }) });
+                  loadMemories();
+                }}>
+                  {["preference", "skill", "goal", "personal", "work", "other"].map((category) => <option key={category}>{category}</option>)}
+                </select>
+                <input defaultValue={memory.content} onBlur={async (event) => {
+                  await fetch(`${API_URL}/memories/${memory.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: event.target.value }) });
+                  loadMemories();
+                }} />
+                <button onClick={async () => {
+                  await fetch(`${API_URL}/memories/${memory.id}`, { method: "DELETE" });
+                  loadMemories();
+                }}>Delete</button>
+              </article>
+            ))}
+            {!memories.length && <p className="news-empty">No memories stored yet.</p>}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

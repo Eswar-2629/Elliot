@@ -12,7 +12,9 @@ venv/
 node_modules/
 dist/
 
-# SQLite runtime data
+# Private Stage 4 runtime memory
+backend/data/
+backend/resumes/
 *.db
 *.sqlite
 *.sqlite3

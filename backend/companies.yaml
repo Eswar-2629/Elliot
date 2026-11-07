@@ -1,0 +1,6 @@
+companies:
+  # Example entries. Replace with real public board tokens.
+  - name: Example Company
+    board: greenhouse
+    token: example-token
+    enabled: false
